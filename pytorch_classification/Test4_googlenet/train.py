@@ -5,12 +5,15 @@ import json
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
+from torch.utils.tensorboard import SummaryWriter
+from torchvision import transforms, datasets, utils
 import torch.optim as optim
+import torchvision
 from tqdm import tqdm
 
 from model import GoogLeNet
 
-
+writer = SummaryWriter('./log')
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
@@ -39,7 +42,7 @@ def main():
     with open('class_indices.json', 'w') as json_file:
         json_file.write(json_str)
 
-    batch_size = 32
+    batch_size = 8
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using {} dataloader workers every process'.format(nw))
 
@@ -63,17 +66,17 @@ def main():
     net = GoogLeNet(num_classes=5, aux_logits=True, init_weights=True)
     # 如果要使用官方的预训练权重，注意是将权重载入官方的模型，不是我们自己实现的模型
     # 官方的模型中使用了bn层以及改了一些参数，不能混用
-    # import torchvision
-    # net = torchvision.models.googlenet(num_classes=5)
-    # model_dict = net.state_dict()
+
+    net = torchvision.models.googlenet(num_classes=5)
+    model_dict = net.state_dict()
     # # 预训练权重下载地址: https://download.pytorch.org/models/googlenet-1378be20.pth
-    # pretrain_model = torch.load("googlenet.pth")
-    # del_list = ["aux1.fc2.weight", "aux1.fc2.bias",
-    #             "aux2.fc2.weight", "aux2.fc2.bias",
-    #             "fc.weight", "fc.bias"]
-    # pretrain_dict = {k: v for k, v in pretrain_model.items() if k not in del_list}
-    # model_dict.update(pretrain_dict)
-    # net.load_state_dict(model_dict)
+    pretrain_model = torch.load("googlenet.pth")
+    del_list = ["aux1.fc2.weight", "aux1.fc2.bias",
+                "aux2.fc2.weight", "aux2.fc2.bias",
+                "fc.weight", "fc.bias"]
+    pretrain_dict = {k: v for k, v in pretrain_model.items() if k not in del_list}
+    model_dict.update(pretrain_dict)
+    net.load_state_dict(model_dict)
     net.to(device)
     loss_function = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=0.0003)
@@ -117,8 +120,14 @@ def main():
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
 
         val_accurate = acc / val_num
+        train_loss = running_loss / train_steps
+
+        val_accurate = acc / val_num
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
+
+        writer.add_scalar('loss', train_loss, epoch)  # 可视化变量loss的值
+        writer.add_scalar('acc', val_accurate, epoch)  # 可视化变量acc的值
 
         if val_accurate > best_acc:
             best_acc = val_accurate

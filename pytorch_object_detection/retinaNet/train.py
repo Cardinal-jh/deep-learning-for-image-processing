@@ -2,9 +2,10 @@ import os
 import datetime
 
 import torch
-
+from torch.utils.tensorboard import SummaryWriter
 import transforms
 from backbone import resnet50_fpn_backbone, LastLevelP6P7
+from torch.utils.tensorboard import SummaryWriter
 from network_files import RetinaNet
 from my_dataset import VOCDataSet
 from train_utils import GroupedBatchSampler, create_aspect_ratio_groups
@@ -36,6 +37,7 @@ def create_model(num_classes):
 
 
 def main(args):
+    tb_writer = SummaryWriter(log_dir="./runs/111")
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     print("Using {} device training.".format(device.type))
 
@@ -151,7 +153,8 @@ def main(args):
             f.write(txt + "\n")
 
         val_map.append(coco_info[1])  # pascal map
-
+        tb_writer.add_scalar('acc', coco_info[1], epoch)
+        tb_writer.add_scalar('acc', 123, epoch)
         # save weights
         save_files = {
             'model': model.state_dict(),
@@ -182,9 +185,9 @@ if __name__ == "__main__":
     # 训练设备类型
     parser.add_argument('--device', default='cuda:0', help='device')
     # 训练数据集的根目录(VOCdevkit)
-    parser.add_argument('--data-path', default='/data', help='dataset')
+    parser.add_argument('--data-path', default='./data', help='dataset')
     # 检测目标类别数(不包含背景)
-    parser.add_argument('--num-classes', default=20, type=int, help='num_classes')
+    parser.add_argument('--num-classes', default=4, type=int, help='num_classes')
     # 文件保存地址
     parser.add_argument('--output-dir', default='./save_weights', help='path where to save')
     # 若需要接着上次训练，则指定上次训练保存权重文件地址
@@ -195,7 +198,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', default=15, type=int, metavar='N',
                         help='number of total epochs to run')
     # 训练的batch size
-    parser.add_argument('--batch_size', default=4, type=int, metavar='N',
+    parser.add_argument('--batch_size', default=2, type=int, metavar='N',
                         help='batch size when training.')
     parser.add_argument('--aspect-ratio-group-factor', default=3, type=int)
     # 是否使用混合精度训练(需要GPU支持混合精度)

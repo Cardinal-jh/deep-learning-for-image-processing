@@ -158,7 +158,7 @@ if __name__ == '__main__':
     # https://download.pytorch.org/models/resnet34-333f7ec4.pth
     parser.add_argument('--weights', type=str, default='resNet34.pth',
                         help='initial weights path')
-    parser.add_argument('--freeze-layers', type=bool, default=False)
+    parser.add_argument('--freeze-layers', type=bool, default=False) #预训练权重
     parser.add_argument('--device', default='cuda', help='device id (i.e. 0 or 0,1 or cpu)')
 
     opt = parser.parse_args()

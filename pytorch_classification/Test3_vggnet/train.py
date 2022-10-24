@@ -4,12 +4,14 @@ import json
 
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms, datasets
 import torch.optim as optim
 from tqdm import tqdm
 
 from model import vgg
 
+writer = SummaryWriter('./log')
 
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -17,7 +19,6 @@ def main():
 
     data_transform = {
         "train": transforms.Compose([transforms.RandomResizedCrop(224),
-                                     transforms.RandomHorizontalFlip(),
                                      transforms.ToTensor(),
                                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]),
         "val": transforms.Compose([transforms.Resize((224, 224)),
@@ -39,7 +40,7 @@ def main():
     with open('class_indices.json', 'w') as json_file:
         json_file.write(json_str)
 
-    batch_size = 32
+    batch_size = 8
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using {} dataloader workers every process'.format(nw))
 
@@ -101,8 +102,12 @@ def main():
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
 
         val_accurate = acc / val_num
+        train_loss = running_loss / train_steps
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
+        writer.add_scalar('loss', train_loss, epoch)  # 可视化变量loss的值
+        writer.add_scalar('acc', val_accurate, epoch)  # 可视化变量acc的值
+
 
         if val_accurate > best_acc:
             best_acc = val_accurate

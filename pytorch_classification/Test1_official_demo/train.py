@@ -5,14 +5,14 @@ from model import LeNet
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-
+#
 def main():
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    # 50000张训练图片
-    # 第一次使用时要将download设置为True才会自动去下载数据集
+#
+#     # 50000张训练图片
+#     # 第一次使用时要将download设置为True才会自动去下载数据集
     train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
                                              download=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=36,
@@ -26,9 +26,9 @@ def main():
                                              shuffle=False, num_workers=0)
     val_data_iter = iter(val_loader)
     val_image, val_label = val_data_iter.next()
-    
-    # classes = ('plane', 'car', 'bird', 'cat',
-    #            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    classes = ('plane', 'car', 'bird', 'cat',
+               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     net = LeNet()
     loss_function = nn.CrossEntropyLoss()

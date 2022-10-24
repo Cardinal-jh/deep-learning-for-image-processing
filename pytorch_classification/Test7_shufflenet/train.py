@@ -12,7 +12,7 @@ from model import shufflenet_v2_x1_0
 from my_dataset import MyDataSet
 from utils import read_split_data, train_one_epoch, evaluate
 
-
+writer = SummaryWriter('./log')
 def main(args):
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
@@ -87,24 +87,44 @@ def main(args):
 
     for epoch in range(args.epochs):
         # train
-        mean_loss = train_one_epoch(model=model,
-                                    optimizer=optimizer,
-                                    data_loader=train_loader,
-                                    device=device,
-                                    epoch=epoch)
+
+        train_loss, train_acc = train_one_epoch(model=model,
+                                                optimizer=optimizer,
+                                                data_loader=train_loader,
+                                                device=device,
+                                                epoch=epoch)
 
         scheduler.step()
 
         # validate
-        acc = evaluate(model=model,
-                       data_loader=val_loader,
-                       device=device)
+        val_loss, val_acc = evaluate(model=model,
+                                     data_loader=val_loader,
+                                     device=device,
+                                     epoch=epoch)
+        # mean_loss = train_one_epoch(model=model,
+        #                             optimizer=optimizer,
+        #                             data_loader=train_loader,
+        #                             device=device,
+        #                             epoch=epoch)
+        #
+        # scheduler.step()
+        #
+        # # validate
+        # acc = evaluate(model=model,
+        #                data_loader=val_loader,
+        #                device=device)
 
-        print("[epoch {}] accuracy: {}".format(epoch, round(acc, 3)))
-        tags = ["loss", "accuracy", "learning_rate"]
-        tb_writer.add_scalar(tags[0], mean_loss, epoch)
-        tb_writer.add_scalar(tags[1], acc, epoch)
-        tb_writer.add_scalar(tags[2], optimizer.param_groups[0]["lr"], epoch)
+        tags = ["train_loss", "train_acc", "val_loss", "val_acc", "learning_rate"]
+        tb_writer.add_scalar(tags[0], train_loss, epoch)
+        tb_writer.add_scalar(tags[1], train_acc, epoch)
+        tb_writer.add_scalar(tags[2], val_loss, epoch)
+        tb_writer.add_scalar(tags[3], val_acc, epoch)
+        tb_writer.add_scalar(tags[4], optimizer.param_groups[0]["lr"], epoch)
+        # print("[epoch {}] accuracy: {}".format(epoch, round(acc, 3)))
+        # tags = ["loss", "accuracy", "learning_rate"]
+        # tb_writer.add_scalar(tags[0], mean_loss, epoch)
+        # tb_writer.add_scalar(tags[1], acc, epoch)
+        # tb_writer.add_scalar(tags[2], optimizer.param_groups[0]["lr"], epoch)
 
         torch.save(model.state_dict(), "./weights/model-{}.pth".format(epoch))
 
@@ -113,14 +133,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_classes', type=int, default=5)
     parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--batch-size', type=int, default=16)
+    parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--lrf', type=float, default=0.1)
 
     # 数据集所在根目录
     # https://storage.googleapis.com/download.tensorflow.org/example_images/flower_photos.tgz
     parser.add_argument('--data-path', type=str,
-                        default="/data/flower_photos")
+                        default="E:/software/GITHUB/gitwarehouse/deep-learning-for-image-processing/data_set/flower_data/flower_photos")
 
     # shufflenetv2_x1.0 官方权重下载地址
     # https://download.pytorch.org/models/shufflenetv2_x1-5666bf0f80.pth

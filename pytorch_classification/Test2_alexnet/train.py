@@ -4,7 +4,9 @@ import json
 
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms, datasets, utils
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.optim as optim
@@ -12,8 +14,10 @@ from tqdm import tqdm
 
 from model import AlexNet
 
+writer = SummaryWriter('./log')
 
 def main():
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
@@ -70,7 +74,7 @@ def main():
     # print(' '.join('%5s' % cla_dict[test_label[j].item()] for j in range(4)))
     # imshow(utils.make_grid(test_image))
 
-    net = AlexNet(num_classes=5, init_weights=True)
+    net = AlexNet(num_classes=2, init_weights=True)
 
     net.to(device)
     loss_function = nn.CrossEntropyLoss()
@@ -113,8 +117,17 @@ def main():
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
 
         val_accurate = acc / val_num
+        train_loss = running_loss / train_steps
+
+
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
-              (epoch + 1, running_loss / train_steps, val_accurate))
+              (epoch + 1, train_loss, val_accurate))
+        writer.add_scalar('loss', train_loss, epoch)  # 可视化变量loss的值
+        writer.add_scalar('acc', val_accurate, epoch)  # 可视化变量acc的值
+
+
+
+
 
         if val_accurate > best_acc:
             best_acc = val_accurate

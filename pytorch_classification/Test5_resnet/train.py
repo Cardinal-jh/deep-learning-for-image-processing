@@ -5,12 +5,13 @@ import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms, datasets
 from tqdm import tqdm
 
 from model import resnet34
 
-
+writer = SummaryWriter('./log')
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
@@ -79,7 +80,7 @@ def main():
     params = [p for p in net.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 3
+    epochs = 30
     best_acc = 0.0
     save_path = './resNet34.pth'
     train_steps = len(train_loader)
@@ -117,11 +118,13 @@ def main():
 
                 val_bar.desc = "valid epoch[{}/{}]".format(epoch + 1,
                                                            epochs)
-
+        train_loss = running_loss / train_steps
         val_accurate = acc / val_num
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
 
+        writer.add_scalar('loss', train_loss, epoch)  # 可视化变量loss的值
+        writer.add_scalar('acc', val_accurate, epoch)  # 可视化变量acc的值
         if val_accurate > best_acc:
             best_acc = val_accurate
             torch.save(net.state_dict(), save_path)

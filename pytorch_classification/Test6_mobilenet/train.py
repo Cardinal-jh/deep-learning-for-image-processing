@@ -7,16 +7,16 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms, datasets
 from tqdm import tqdm
-
+from torch.utils.tensorboard import SummaryWriter
 from model_v2 import MobileNetV2
 
-
+writer = SummaryWriter('./log')
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
-    batch_size = 16
-    epochs = 5
+    batch_size = 8
+    epochs = 30
 
     data_transform = {
         "train": transforms.Compose([transforms.RandomResizedCrop(224),
@@ -124,8 +124,11 @@ def main():
                 val_bar.desc = "valid epoch[{}/{}]".format(epoch + 1,
                                                            epochs)
         val_accurate = acc / val_num
+        train_loss = running_loss / train_steps
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
+        writer.add_scalar('loss', train_loss, epoch)  # 可视化变量loss的值
+        writer.add_scalar('acc', val_accurate, epoch)  # 可视化变量acc的值
 
         if val_accurate > best_acc:
             best_acc = val_accurate

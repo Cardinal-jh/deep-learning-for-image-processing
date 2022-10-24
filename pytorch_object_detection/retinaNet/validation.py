@@ -197,13 +197,13 @@ if __name__ == "__main__":
     parser.add_argument('--device', default='cuda:0', help='device')
 
     # 检测目标类别数
-    parser.add_argument('--num-classes', type=int, default='20', help='number of classes')
+    parser.add_argument('--num-classes', type=int, default='4', help='number of classes')
 
     # 数据集的根目录(VOCdevkit)
-    parser.add_argument('--data-path', default='/data', help='dataset root')
+    parser.add_argument('--data-path', default='./data', help='dataset root')
 
     # 训练好的权重文件
-    parser.add_argument('--weights-path', default='./save_weights/model.pth', type=str, help='training weights')
+    parser.add_argument( '--weights-path', default='./save_weights/resNetFpn-model-14.pth', type=str, help='training weights')
 
     # batch size
     parser.add_argument('--batch_size', default=1, type=int, metavar='N',
