@@ -45,10 +45,14 @@ class CocoKeypoint(data.Dataset):
             for ann in anns:
                 # only save person class
                 if ann["category_id"] != 1:
-                    print(ann["category_id"])
+                    print(f'warning: find not support id: {ann["category_id"]}, only support id: 1 (person)')
+                    continue
 
-                # skip objs without keypoints annotation
-                if "keypoints" in ann:
+                # COCO_val2017_detections_AP_H_56_person.json文件中只有det信息，没有keypoint信息，跳过检查
+                if det_json_path is None:
+                    # skip objs without keypoints annotation
+                    if "keypoints" not in ann:
+                        continue
                     if max(ann["keypoints"]) == 0:
                         continue
 
@@ -65,7 +69,9 @@ class CocoKeypoint(data.Dataset):
                         "obj_index": obj_idx,
                         "score": ann["score"] if "score" in ann else 1.
                     }
-                    if "keypoints" in ann:
+
+                    # COCO_val2017_detections_AP_H_56_person.json文件中只有det信息，没有keypoint信息，跳过
+                    if det_json_path is None:
                         keypoints = np.array(ann["keypoints"]).reshape([-1, 3])
                         visible = keypoints[:, 2]
                         keypoints = keypoints[:, :2]
